@@ -1,0 +1,5 @@
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(.*)$ request_handler.php [L]
+</IfModule>
