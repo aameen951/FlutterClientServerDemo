@@ -12,14 +12,13 @@ define('DB_DATABASE_NAME', "fcsd");
 // NOTE(ameen):   END OF USER CONFIGURATION
 // ****************************************
 
+// NOTE(ameen): Helpers
+function define_str($str)
+{
+  define($str, $str);
+}
+
 // NOTE(ameen): HTTP Request code
-
-define('METHOD', strtoupper($_SERVER['REQUEST_METHOD']));
-$route = trim($_SERVER['REQUEST_URI'], '/');
-if(stripos($route."/", URL_PREFIX."/") === 0)$route = trim(substr($route, strlen(URL_PREFIX)), '/');
-
-define('ROUTE', $route);
-
 function _json_output($code, $status, $body)
 {
   http_response_code($code);
@@ -35,50 +34,12 @@ function json_error($code, $error_name, $error_message = null, $details=null)
   _json_output($code, 'error', $error);
 }
 
-$orig_request_headers = apache_request_headers();
-$request_headers = [];
-foreach($orig_request_headers as $header_name => $header_value)
-{
-  $request_headers[strtolower($header_name)] = $header_value;
-}
-function has_header($name)
-{
-  global $request_headers;
-  $name = strtolower($name);
-  return isset($request_headers[$name]);
-}
-function get_header($name, $default = null)
-{
-  global $request_headers;
-  if(has_header($name))return $request_headers[strtolower($name)];
-  return $default;
-}
-$request_data = file_get_contents('php://input');
-if(get_header('Content-Type') !== 'application/json')
-{
-  json_error(400, "UNSUPPORTED_REQUEST_FORMAT", "Request payload must have JSON format");
-}
-$request_data = json_decode($request_data, true);
-if(json_last_error() !== JSON_ERROR_NONE)
-{
-  json_error(400, "BAD_REQUEST_FORMAT", "Request payload is not a valid JSON format");
-}
-
-function get_request_data()
-{
-  global $request_data;
-  return $request_data;
-}
 
 define('GET', 'GET');
 define('POST', 'POST');
 define('PUT', 'PUT');
 define('PATCH', 'PATCH');
 define('DELETE', 'DELETE');
-if(METHOD !== GET && METHOD !== POST && METHOD !== PUT && METHOD !== DELETE && METHOD !== PATCH)
-{
-  json_error(400, "HTTP_BAD_METHOD");
-}
 
 class ApiRes
 {
@@ -132,7 +93,7 @@ function db_query($sql)
   $res = mysqli_query($c, $sql);
 
   $data = null;
-  if($res === true) ;// nothing to do
+  if($res === true) /* nothing to do */;
   elseif($res instanceof mysqli_result)
   {
     $data = [];
@@ -207,27 +168,100 @@ function require_once_dir($dir)
 }
 
 // NOTE(ameen): Router code
-$route_table = [
+class RequestCtx
+{
+  private $data;
+  private $headers;
+  public function __construct($headers)
+  {
+    $this->data = null;
+    $this->headers = $headers;
+  }
+  public function set_data($data){
+    $this->data = $data;
+  }
+  public function get($name)
+  {
+    if(!array_key_exists($name, $this->data))return null;
+    return $this->data[$name];
+  }
+  public function has_header($name)
+  {
+    $name = strtolower($name);
+    return isset($this->headers[$name]);
+  }
+  public function get_header($name)
+  {
+    if(!$this->has_header($name))return null;
+    return $this->headers[strtolower($name)];
+  }
+}
+$router_table = [
   GET=>[],
   POST=>[],
   PUT=>[],
   PATCH=>[],
   DELETE=>[],
 ];
-function router_register($method, $route, $func)
+$router_request_handlers = [];
+function router_register($method, $route, $opt, $func)
 {
-  global $route_table;
-  $route_table[$method][$route] = $func;
+  global $router_table;
+  $router_table[$method][$route] = ['cb'=>$func, 'opt'=>$opt];
+}
+function router_register_request_handler($handler_cb)
+{
+  global $router_request_handlers;
+  $router_request_handlers[] = $handler_cb;
 }
 function router_dispatch()
 {
-  global $route_table;
-  $method = METHOD;
-  $route = ROUTE;
-  if(isset($route_table[$method][$route]))
+  global $router_table;
+  global $router_request_handlers;
+
+  $method = strtoupper($_SERVER['REQUEST_METHOD']);
+  $route = trim($_SERVER['REQUEST_URI'], '/');
+  if(stripos($route."/", URL_PREFIX."/") === 0)
   {
-    $data = get_request_data();
-    $result_obj = $route_table[$method][$route]($data);
+    $route = trim(substr($route, strlen(URL_PREFIX)), '/');
+  }
+
+  if(!isset($router_table[$method]))
+  {
+    json_error(400, "HTTP_BAD_METHOD");
+  }
+  
+  $request_headers = [];
+  foreach(apache_request_headers() as $header_name => $header_value)
+  {
+    $request_headers[strtolower($header_name)] = $header_value;
+  }
+
+  $ctx = new RequestCtx($request_headers);
+
+  $request_data = file_get_contents('php://input');
+  if($ctx->get_header('Content-Type') !== 'application/json')
+  {
+    json_error(400, "UNSUPPORTED_REQUEST_FORMAT", "Request payload must have JSON format");
+  }
+  $request_data = json_decode($request_data, true);
+  if(json_last_error() !== JSON_ERROR_NONE)
+  {
+    json_error(400, "BAD_REQUEST_FORMAT", "Request payload is not a valid JSON format");
+  }
+
+  $ctx->set_data($request_data);
+
+  if(isset($router_table[$method][$route]))
+  {
+    $route = $router_table[$method][$route];
+
+    foreach($router_request_handlers as $handler_cb)
+    {
+      $handler_cb($ctx, $route['opt']);
+    }
+  
+    $result_obj = $route['cb']($ctx);
     if(!($result_obj instanceof ApiRes))
     {
       json_error(500, "BAD_RETURN_VALUE_FROM_CONTROLLER", "Controller '$method:$route' didn't return the result using api_ok/api_err");
