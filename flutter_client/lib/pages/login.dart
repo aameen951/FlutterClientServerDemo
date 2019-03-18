@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/pages/register.dart';
+import 'package:flutter_client/widgets/text_box.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key}) : super(key: key);
@@ -11,7 +13,18 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
   final GlobalKey<FormFieldState<String>> _passwordKey = GlobalKey<FormFieldState<String>>();
-  bool hidePassword = true;
+  bool isLoading = false;
+
+  void login()async
+  {
+    var requestData = <String, dynamic>{
+      "email":_emailKey.currentState.value,
+      "password":_emailKey.currentState.value,
+    };
+    setState(() {isLoading = true;});
+    var response = await makeRequest("POST", "auth/login", requestData);
+    setState(() {isLoading = false;});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,85 +33,62 @@ class _LoginPageState extends State<LoginPage> {
         padding: EdgeInsets.all(20),
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: Center(
-            child:SingleChildScrollView(
-              child:Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
+          child: SingleChildScrollView(
+            child:Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
 
-                  Text(
-                    "تسجيل الدخول",
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
+                SizedBox(height:100),
+
+                Text(
+                  "تسجيل الدخول",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
 
-                  SizedBox(height:16),
+                SizedBox(height:16),
 
-                  TextFormField(
-                    key: _emailKey,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      contentPadding: EdgeInsets.all(0),
-                      labelText: "الإيميل",
-                      prefixIcon: Icon(Icons.email),
-                    ),
+                WdTextBox(_emailKey, "الإيميل", Icons.email),
+
+                SizedBox(height:16),
+
+                WdPasswordBox(_passwordKey, "كلمة المرور"),
+                
+                SizedBox(height:40),
+
+                Container(
+                  width: double.infinity,
+                  child: RaisedButton(
+                    child: Text("الدخول"),
+                    color: Theme.of(context).primaryColor,
+                    padding: EdgeInsets.all(10),
+                    textColor: Colors.white,
+                    onPressed: login,
                   ),
+                ),
 
-                  SizedBox(height:16),
-                  
-                  TextFormField(
-                    key: _passwordKey,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      contentPadding: EdgeInsets.all(0),
-                      labelText: "كلمة المرور",
-                      prefixIcon: Icon(Icons.lock),
-                      suffixIcon: GestureDetector(
-                        child:Container(
-                          padding: EdgeInsets.symmetric(vertical:8, horizontal: 14),
-                          child:Icon(hidePassword ? Icons.visibility : Icons.visibility_off)
-                        ),
-                        onTap: (){setState(() {
-                          hidePassword = !hidePassword;
-                        });},
-                      )
-                    ),
-                    obscureText: hidePassword,
-                  ),
+                SizedBox(height:12),
 
-                  SizedBox(height:16),
+                isLoading ? CircularProgressIndicator(
+                ) : Row( ),
 
-                  Container(
-                    width: double.infinity,
-                    child: RaisedButton(
-                      child: Text("الدخول"),
-                      color: Theme.of(context).primaryColor,
-                      padding: EdgeInsets.all(10),
-                      textColor: Colors.white,
-                      onPressed: (){
-                      },
-                    ),
-                  ),
+                FlatButton(
+                  child: Text("حساب جديد", style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold)),
+                  textColor: Theme.of(context).primaryColor,
+                  onPressed: (){
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx)=>RegisterPage())
+                    );
+                  },
+                ),
 
-                  SizedBox(height:16),
-
-                  FlatButton(
-                    child: Text("حساب جديد", style: TextStyle(decoration: TextDecoration.underline,fontWeight: FontWeight.bold)),
-                    textColor: Theme.of(context).primaryColor,
-                    onPressed: (){
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (ctx)=>RegisterPage())
-                      );
-                    },
-                  ),
-                ],
-              )
+              ],
             )
           )
         )
-      ),
+      )
     );
   }
 }

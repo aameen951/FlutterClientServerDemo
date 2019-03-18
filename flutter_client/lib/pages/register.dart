@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_client/widgets/text_box.dart';
 
 class RegisterPage extends StatefulWidget {
   RegisterPage({Key key}) : super(key: key);
@@ -9,8 +10,8 @@ class RegisterPage extends StatefulWidget {
 
 class RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _passwordKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _confirmPasswordKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
+  final GlobalKey<WdPasswordBoxState> _confirmPasswordKey = GlobalKey<WdPasswordBoxState>();
   bool hidePassword = true;
 
   @override
@@ -35,61 +36,11 @@ class RegisterPageState extends State<RegisterPage> {
                   ),
 
                   SizedBox(height:16),
-
-                  TextFormField(
-                    key: _emailKey,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      contentPadding: EdgeInsets.all(0),
-                      labelText: "الإيميل",
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                  ),
-
+                  WdTextBox(_emailKey, "الإيميل", Icons.email),
                   SizedBox(height:16),
-                  
-                  TextFormField(
-                    key: _passwordKey,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      contentPadding: EdgeInsets.all(0),
-                      labelText: "كلمة المرور",
-                      prefixIcon: Icon(Icons.lock),
-                      suffixIcon: GestureDetector(
-                        child:Container(
-                          padding: EdgeInsets.symmetric(vertical:8, horizontal: 14),
-                          child:Icon(hidePassword ? Icons.visibility : Icons.visibility_off)
-                        ),
-                        onTap: (){setState(() {
-                          hidePassword = !hidePassword;
-                        });},
-                      )
-                    ),
-                    obscureText: hidePassword,
-                  ),
-
+                  WdPasswordBox(_passwordKey, "كلمة المرور"),
                   SizedBox(height:16),
-
-                  TextFormField(
-                    key: _confirmPasswordKey,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      contentPadding: EdgeInsets.all(0),
-                      labelText: "تأكيد كلمة المرور",
-                      prefixIcon: Icon(Icons.lock),
-                      suffixIcon: GestureDetector(
-                        child:Container(
-                          padding: EdgeInsets.symmetric(vertical:8, horizontal: 14),
-                          child:Icon(hidePassword ? Icons.visibility : Icons.visibility_off)
-                        ),
-                        onTap: (){setState(() {
-                          hidePassword = !hidePassword;
-                        });},
-                      )
-                    ),
-                    obscureText: hidePassword,
-                  ),
-
+                  WdPasswordBox(_confirmPasswordKey, "تأكيد كلمة المرور"),
                   SizedBox(height:16),
 
                   Container(
@@ -100,7 +51,6 @@ class RegisterPageState extends State<RegisterPage> {
                       padding: EdgeInsets.all(10),
                       textColor: Colors.white,
                       onPressed: (){
-
                       },
                     ),
                   ),
