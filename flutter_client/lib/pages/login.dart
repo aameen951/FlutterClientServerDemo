@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_client/modules/http_client.dart';
+import 'package:flutter_client/modules/json_deserializer.dart';
 import 'package:flutter_client/pages/register.dart';
 import 'package:flutter_client/widgets/text_box.dart';
 
@@ -10,19 +11,52 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
+class AuthLoginResponse
+{
+  String token;
+  static AuthLoginResponse fromMap(dynamic obj)
+  {
+    var map = Deserializer.toMap(obj);
+    var result = AuthLoginResponse();
+    result.token = Deserializer.readProperty<String>(map, 'token');
+    return result;
+  }
+}
+
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _passwordKey = GlobalKey<FormFieldState<String>>();
-  bool isLoading = false;
+  final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
 
-  void login()async
+  bool isLoading = false;
+  ApiResponseFormError error;
+
+  void login() async
   {
+    // set loading to true
+    setState(() {
+      error = null;
+      isLoading = true;
+    });
+    // request data
     var requestData = <String, dynamic>{
       "email":_emailKey.currentState.value,
-      "password":_emailKey.currentState.value,
+      "password":_passwordKey.currentState.fieldState.value,
     };
-    setState(() {isLoading = true;});
-    var response = await makeRequest("POST", "auth/login", requestData);
+    // send the request, and specify the class the represent the response
+    var response = await makeRequest("POST", "auth/login", requestData, AuthLoginResponse.fromMap);
+    if(response.type == ApiResponseType.Ok)
+    {
+      // read the token from the response
+      print(response.data.token);
+    }
+    else
+    {
+      // error handling
+      setState(() {
+        error = response.formError;
+      });
+    }
+    // set loading to false
     setState(() {isLoading = false;});
   }
 
@@ -57,6 +91,11 @@ class _LoginPageState extends State<LoginPage> {
                 WdPasswordBox(_passwordKey, "كلمة المرور"),
                 
                 SizedBox(height:40),
+
+                error != null ? Text(
+                  error.name,
+                  style:TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
+                ) : Row(),
 
                 Container(
                   width: double.infinity,

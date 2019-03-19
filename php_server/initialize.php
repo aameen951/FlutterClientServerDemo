@@ -36,44 +36,41 @@ function define_str($str)
 }
 
 // NOTE(ameen): HTTP Request/Response code
-function _json_output($code, $status, $body)
+function _json_output($code, $type, $body)
 {
   http_response_code($code);
   header("Content-Type: application/json");
-  echo json_encode(['status'=>$status, 'body'=>$body]);
+  echo json_encode(['type'=>$type, 'body'=>$body]);
   die;
 }
 function json_error($code, $error_name, $error_message = null, $details=null)
 {
   $error = ['name'=>$error_name];
-  if($error_message)$error['message'] = $error_message;
-  if($details)$error['details'] = $details;
+  $error['message'] = $error_message;
+  $error['params'] = $details;
   _json_output($code, 'error', $error);
 }
 function fatal_error($error_name, $error_message = null)
 {
   json_error(500, $error_name, $error_message);
 }
-class ApiRes
+class JsonRes
 {
-  public $is_ok;
+  public $type;
   public $data;
-  public function __construct($is_ok, $data)
+  public function __construct($type, $data)
   {
-    $this->is_ok = $is_ok;
+    $this->type = $type;
     $this->data = $data;
   }
 }
-function _json_send_api_res(int $code, ApiRes $api_res)
+function JsonOk($data = null)
 {
-  if($api_res->is_ok)
-  {
-    _json_output(200, 'ok', $api_res->data);
-  }
-  else
-  {
-    _json_output(200, 'api_error', $api_res->data);
-  }
+  return new JsonRes('ok', $data);
+}
+function JsonFormError(string $error_name, $error_params=null)
+{
+  return new JsonRes('form_error', ['name'=>$error_name, 'params'=>$error_params]);
 }
 class RequestCtx
 {
@@ -101,14 +98,6 @@ class RequestCtx
   {
     if(!$this->has_header($name))return null;
     return $this->headers[strtolower($name)];
-  }
-  public function ok($data = null)
-  {
-    return new ApiRes(true, $data);
-  }
-  public function err($data)
-  {
-    return new ApiRes(false, $data);
   }
 }
 
@@ -266,20 +255,20 @@ function router_dispatch()
 
   if(isset($router_table[$method][$route]))
   {
-    $route = $router_table[$method][$route];
+    $route_data = $router_table[$method][$route];
 
     foreach($router_request_handlers as $handler_cb)
     {
-      $handler_cb($ctx, $route['opt']);
+      $handler_cb($ctx, $route_data['opt']);
     }
   
-    $result_obj = $route['cb']($ctx);
-    if(!($result_obj instanceof ApiRes))
+    $result_obj = $route_data['cb']($ctx);
+    if(!($result_obj instanceof JsonRes))
     {
-      fatal_error("BAD_RETURN_VALUE_FROM_CONTROLLER", "Controller '$method:$route' didn't return the result using ctx->ok/ctx->err");
+      fatal_error("BAD_RETURN_VALUE_FROM_CONTROLLER", "Controller '$method:$route' didn't return the result using JsonOk/JsonFormError/...");
     }
 
-    _json_send_api_res(200, $result_obj);
+    _json_output(200, $result_obj->type, $result_obj->data);
   }
   else
   {

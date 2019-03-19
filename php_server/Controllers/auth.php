@@ -12,12 +12,12 @@ router_register(POST, 'auth/register', [], function($ctx){
 
   if(mdl_user_get_by_email($email))
   {
-    return $ctx->err(ERR_AUTH_EMAIL_USED);
+    return JsonFormError(ERR_AUTH_EMAIL_USED);
   }
 
   $id = mdl_user_create($email, $password);
   
-  return $ctx->ok(['user_id'=>$id]);
+  return JsonOk(['user_id'=>$id]);
 });
 
 router_register(POST, 'auth/login', [], function($ctx){
@@ -25,23 +25,23 @@ router_register(POST, 'auth/login', [], function($ctx){
   $password = $ctx->get('password');
 
   $user = mdl_user_get_by_email($email);
-  if(!$user)return $ctx->err(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
+  if(!$user)return JsonFormError(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
 
   if(!mdl_user_verify_password($user, $password))
   {
-    return $ctx->err(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
+    return JsonFormError(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
   }
 
   $token = mdl_session_create($user);
 
-  return $ctx->ok($token);
+  return JsonOk(['token'=>$token]);
 });
 
 router_register(POST, 'auth/logout', ['require_auth'=>true], function($ctx){
   
   mdl_session_delete($ctx->session['token']);
 
-  return $ctx->ok();
+  return JsonOk();
 });
 
 function auth_request_handler(RequestCtx $ctx, $opt)
