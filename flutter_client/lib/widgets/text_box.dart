@@ -34,7 +34,7 @@ class WdPasswordBoxState extends State<WdPasswordBox> {
   bool hidePassword = true;
   final GlobalKey<FormFieldState<String>> _fieldState = GlobalKey<FormFieldState<String>>();
 
-  FormFieldState<String> get fieldState => _fieldState.currentState;
+  String get value => _fieldState.currentState.value;
 
   @override
   Widget build(BuildContext context) {

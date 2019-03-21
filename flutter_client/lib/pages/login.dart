@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_client/modules/http_client.dart';
+import 'package:flutter_client/modules/i18n.dart';
 import 'package:flutter_client/modules/json_deserializer.dart';
 import 'package:flutter_client/pages/register.dart';
+import 'package:flutter_client/widgets/response_error.dart';
 import 'package:flutter_client/widgets/text_box.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,37 +31,32 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
 
   bool isLoading = false;
-  ApiResponseFormError error;
+  ApiResponse lastResponse;
 
   void login() async
   {
     // set loading to true
     setState(() {
-      error = null;
+      lastResponse = null;
       isLoading = true;
     });
     // request data
     var requestData = <String, dynamic>{
       "email":_emailKey.currentState.value,
-      "password":_passwordKey.currentState.fieldState.value,
+      "password":_passwordKey.currentState.value,
     };
     // send the request, and specify the class the represent the response
     var response = await makeRequest("POST", "auth/login", requestData, AuthLoginResponse.fromMap);
+    setState(() {lastResponse = response;});
     if(response.type == ApiResponseType.Ok)
     {
       // read the token from the response
       print(response.data.token);
     }
-    else
-    {
-      // error handling
-      setState(() {
-        error = response.formError;
-      });
-    }
     // set loading to false
     setState(() {isLoading = false;});
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,12 +88,9 @@ class _LoginPageState extends State<LoginPage> {
 
                 WdPasswordBox(_passwordKey, "كلمة المرور"),
                 
-                SizedBox(height:40),
-
-                error != null ? Text(
-                  error.name,
-                  style:TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
-                ) : Row(),
+                SizedBox(height:16),
+                WdResponseError(lastResponse),
+                SizedBox(height:16),
 
                 Container(
                   width: double.infinity,
@@ -110,6 +105,22 @@ class _LoginPageState extends State<LoginPage> {
 
                 SizedBox(height:12),
 
+                Container(
+                  width: double.infinity,
+                  child: RaisedButton(
+                    child: Text("الدخول"),
+                    color: Theme.of(context).primaryColor,
+                    padding: EdgeInsets.all(10),
+                    textColor: Colors.white,
+                    onPressed: ()async{
+                      rootBundle.evict("i18n/ar.json");
+                      var i18nData = await rootBundle.loadString("i18n/ar.json");
+                      i18nLoad(i18nData);
+                    },
+                  ),
+                ),
+
+                SizedBox(height:12),
                 isLoading ? CircularProgressIndicator(
                 ) : Row( ),
 

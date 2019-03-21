@@ -11,11 +11,12 @@ class Deserializer
   {
     return convert.json.decode(data);
   }
-  static T readProperty<T>(Map<String, dynamic> data, String key)
+  static T readProperty<T>(Map<String, dynamic> data, String key, [bool allowNull=true])
   {
     if(!data.containsKey(key))throw DeserilizationError("Property '$key' doesn't exists");
     dynamic value = data[key];
-    if(!(value is T))throw DeserilizationError("Property '$key' has the wrong type");
+    if(allowNull && value == null){/* nothing to do */}
+    else if(!(value is T))throw DeserilizationError("Property '$key' has the wrong type");
     return value as T;
   }
   static Map<String, dynamic> toMap(dynamic obj)

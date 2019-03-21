@@ -71,12 +71,15 @@ class ApiResponse<T>
     return result;
   }
 }
-ApiResponse protocolError(String name, String message, [Map<String, dynamic> params])
+ApiResponse<T> protocolError<T>(String name, String message, [Map<String, dynamic> params])
 {
   var error = <String, dynamic>{
-    "name": name,
-    "message": message,
-    "params": params,
+    "type": "error",
+    "body": <String, dynamic>{
+      "name": name,
+      "message": message,
+      "params": params,
+    },
   };
   return ApiResponse.fromMap(error);
 }
@@ -108,7 +111,7 @@ Future<ApiResponse<T>> makeRequest<T>(String method, String path, dynamic reques
       var responseMap = Deserializer.strToMap(responseDataStr);
       result = ApiResponse.fromMap<T>(responseMap, reader ?? (x)=>x);
     } on DeserilizationError catch(e) {
-      result = protocolError(
+      result = protocolError<T>(
         "BAD_RESPONSE_FORMAT", 
         "Server responeded with payload that has bad/unexpected format",
         <String, dynamic>{
