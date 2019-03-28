@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_client/modules/http_client.dart';
+import 'package:flutter_client/widgets/response_error.dart';
 import 'package:flutter_client/widgets/text_box.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -11,8 +13,31 @@ class RegisterPage extends StatefulWidget {
 class RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
   final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
-  final GlobalKey<WdPasswordBoxState> _confirmPasswordKey = GlobalKey<WdPasswordBoxState>();
-  bool hidePassword = true;
+
+  bool isLoading = false;
+  ApiResponse lastResponse;
+  void register() async
+  {
+    setState(() {
+      isLoading = true;
+      lastResponse = null;
+    });
+    var requestData = <String, dynamic>{
+      "email":_emailKey.currentState.value,
+      "password":_passwordKey.currentState.value,
+    };
+    var response = await makeRequest("POST", "auth/register", requestData);
+    setState(() {
+      lastResponse = response;
+    });
+    if(response.type == ApiResponseType.Ok)
+    {
+      Navigator.of(context).pop();
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +65,8 @@ class RegisterPageState extends State<RegisterPage> {
                   SizedBox(height:16),
                   WdPasswordBox(_passwordKey, "كلمة المرور"),
                   SizedBox(height:16),
-                  WdPasswordBox(_confirmPasswordKey, "تأكيد كلمة المرور"),
+                  
+                  WdResponseError(lastResponse),
                   SizedBox(height:16),
 
                   Container(
@@ -50,10 +76,13 @@ class RegisterPageState extends State<RegisterPage> {
                       color: Theme.of(context).primaryColor,
                       padding: EdgeInsets.all(10),
                       textColor: Colors.white,
-                      onPressed: (){
-                      },
+                      onPressed: register,
                     ),
                   ),
+                  SizedBox(height:12),
+
+                  isLoading ? CircularProgressIndicator(
+                  ) : Container( ),
 
                 ],
               )

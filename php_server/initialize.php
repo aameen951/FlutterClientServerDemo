@@ -245,10 +245,13 @@ function router_dispatch()
   {
     json_error(400, "UNSUPPORTED_REQUEST_FORMAT", "Request payload must have JSON format");
   }
-  $request_data = json_decode($request_data, true);
-  if(json_last_error() !== JSON_ERROR_NONE)
+  if(trim($request_data))
   {
-    json_error(400, "BAD_REQUEST_FORMAT", "Request payload is not a valid JSON format");
+    $request_data = json_decode($request_data, true);
+    if(json_last_error() !== JSON_ERROR_NONE)
+    {
+      json_error(400, "BAD_REQUEST_FORMAT", "Request payload is not a valid JSON format");
+    }
   }
 
   $ctx->set_data($request_data);

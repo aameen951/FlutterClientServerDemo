@@ -1,8 +1,6 @@
 {
   "errors":{
-    "ERR_AUTH_INCORRECT_EMAIL_PASSWORD": "الإيميل أو كلمة المرور خطأ",
-    "ERR_AUTH_EMAIL_USED": "ERR: AUTH_EMAIL_USED",
-    "ERR_AUTH_UNAUTHORIZED": "ERR: AUTH_UNAUTHORIZED",
-    "ERR_AUTH_BAD_AUTH_HEADER": "ERR: AUTH_BAD_AUTH_HEADER"
+    "USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD": "الإيميل أو كلمة المرور خطأ",
+    "USR_ERR_AUTH_EMAIL_USED": "الإيميل مستخدم مسبقا"
   }
 }

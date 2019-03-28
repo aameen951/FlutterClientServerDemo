@@ -1,7 +1,7 @@
 <?php
 
-define_str('ERR_AUTH_INCORRECT_EMAIL_PASSWORD');
-define_str('ERR_AUTH_EMAIL_USED');
+define_str('USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD');
+define_str('USR_ERR_AUTH_EMAIL_USED');
 define_str('ERR_AUTH_UNAUTHORIZED');
 define_str('ERR_AUTH_BAD_AUTH_HEADER');
 
@@ -12,7 +12,7 @@ router_register(POST, 'auth/register', [], function($ctx){
 
   if(mdl_user_get_by_email($email))
   {
-    return JsonFormError(ERR_AUTH_EMAIL_USED);
+    return JsonFormError(USR_ERR_AUTH_EMAIL_USED);
   }
 
   $id = mdl_user_create($email, $password);
@@ -20,16 +20,26 @@ router_register(POST, 'auth/register', [], function($ctx){
   return JsonOk(['user_id'=>$id]);
 });
 
+router_register(GET, 'auth/user-status', ['require_auth'=>true], function($ctx){
+  $user_id = $ctx->session['user'];
+
+  $user = mdl_user_get($user_id);
+
+  return JsonOk([
+    'email'=>$user['email'],
+  ]);
+});
+
 router_register(POST, 'auth/login', [], function($ctx){
   $email = $ctx->get('email');
   $password = $ctx->get('password');
 
   $user = mdl_user_get_by_email($email);
-  if(!$user)return JsonFormError(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
+  if(!$user)return JsonFormError(USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
 
   if(!mdl_user_verify_password($user, $password))
   {
-    return JsonFormError(ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
+    return JsonFormError(USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD);
   }
 
   $token = mdl_session_create($user);
@@ -65,6 +75,6 @@ function auth_request_handler(RequestCtx $ctx, $opt)
   }
   if($opt['require_auth'] && !$ctx->session)
   {
-    json_error(401, ERR_AUTH_UNAUTHORIZED);
+    //json_error(401, ERR_AUTH_UNAUTHORIZED);
   }
 }

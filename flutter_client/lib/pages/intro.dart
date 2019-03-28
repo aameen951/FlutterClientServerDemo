@@ -1,19 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_client/modules/http_client.dart';
+import 'package:flutter_client/modules/json_deserializer.dart';
+import 'package:flutter_client/pages/home.dart';
 import 'package:flutter_client/pages/login.dart';
+import 'package:flutter_client/widgets/response_error.dart';
 
 class IntroPage extends StatefulWidget {
   IntroPage({Key key}) : super(key: key);
 
   @override
-  MyHomePageState createState() => MyHomePageState();
+  IntroPageState createState() => IntroPageState();
 }
 
-class MyHomePageState extends State<IntroPage> {
-  int _counter = 0;
+class AuthUserStatusResponse
+{
+  String email;
+  static AuthUserStatusResponse fromMap(dynamic obj)
+  {
+    var map = Deserializer.toMap(obj);
+    var result = AuthUserStatusResponse();
+    result.email = Deserializer.readProperty<String>(map, "email");
+    return result;
+  }
+}
+class IntroPageState extends State<IntroPage> {
+  bool isLoading = false;
+  ApiResponse response;
 
-  void _incrementCounter() {
+  void checkStatus() async {
+    // Navigator.of(context).push(
+    //     MaterialPageRoute(builder: (ctx) => LoginPage()));
     setState(() {
-      _counter++;
+      response = null;
+      isLoading = true; 
+    });
+
+    var request = await makeRequest("GET", "auth/user-status", null, AuthUserStatusResponse.fromMap);
+    if(request.type == ApiResponseType.Ok)
+    {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (ctx) => HomePage()));
+    }
+    else if(request.type == ApiResponseType.Error && request.error.name == "ERR_AUTH_UNAUTHORIZED")
+    {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (ctx) => LoginPage()));
+    }
+    else
+    {
+      setState((){
+        response = request;
+      });
+    }
+
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -37,7 +78,11 @@ class MyHomePageState extends State<IntroPage> {
                       fontSize: 30,
                     ),
                   ),
+
                   SizedBox(height: 16),
+                  WdResponseError(response),
+                  SizedBox(height: 16),
+
                   Container(
                     width: double.infinity,
                     child: RaisedButton(
@@ -45,12 +90,14 @@ class MyHomePageState extends State<IntroPage> {
                       color: Theme.of(context).primaryColor,
                       padding: EdgeInsets.all(10),
                       textColor: Colors.white,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(builder: (ctx) => LoginPage()));
-                      },
+                      onPressed: checkStatus,
                     ),
                   ),
+
+                  SizedBox(height: 16),
+
+                  isLoading ? CircularProgressIndicator() : Container( ),
+
                 ],
               ),
             )

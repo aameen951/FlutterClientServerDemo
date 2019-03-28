@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/modules/i18n.dart';
 import 'package:flutter_client/pages/intro.dart';
 
 void main() async {
+  initHttpClient();
   runApp(MyApp());
 }
 
