@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_client/models/session.dart';
 import 'package:flutter_client/modules/http_client.dart';
-import 'package:flutter_client/modules/i18n.dart';
-import 'package:flutter_client/modules/json_deserializer.dart';
+import 'package:flutter_client/pages/home.dart';
 import 'package:flutter_client/pages/register.dart';
 import 'package:flutter_client/widgets/response_error.dart';
 import 'package:flutter_client/widgets/text_box.dart';
@@ -20,23 +18,20 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
   final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
 
-  bool isLoading = false;
-  ApiResponse lastResponse;
+  final rCtx = new RequestContext();
 
   void login() async
   {
-    setState(() {
-      lastResponse = null;
-      isLoading = true;
-    });
-    var response = await sessionLogin(_emailKey.currentState.value, _passwordKey.currentState.value);
-    setState(() {lastResponse = response;});
+    setState(() {});
+    var email = _emailKey.currentState.value;
+    var password = _passwordKey.currentState.value;
+    var response = await sessionLogin(rCtx, email, password);
     if(response.type == ApiResponseType.Ok)
     {
-      var token = response.data.token;
-      setHttpClientAuthToken(token);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (ctx) => HomePage()));
     }
-    setState(() {isLoading = false;});
+    setState(() {});
   }
 
   @override
@@ -70,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
                 WdPasswordBox(_passwordKey, "كلمة المرور"),
                 
                 SizedBox(height:16),
-                WdResponseError(lastResponse),
+                rCtx.errorWidget(),
                 SizedBox(height:16),
 
                 Container(
@@ -86,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 SizedBox(height:12),
 
-                isLoading ? CircularProgressIndicator(
+                rCtx.isLoading ? CircularProgressIndicator(
                 ) : Container( ),
 
                 FlatButton(

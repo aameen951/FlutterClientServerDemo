@@ -75,6 +75,6 @@ function auth_request_handler(RequestCtx $ctx, $opt)
   }
   if($opt['require_auth'] && !$ctx->session)
   {
-    //json_error(401, ERR_AUTH_UNAUTHORIZED);
+    json_error(401, ERR_AUTH_UNAUTHORIZED);
   }
 }

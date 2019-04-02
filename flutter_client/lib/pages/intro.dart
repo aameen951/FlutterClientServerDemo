@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_client/models/session.dart';
 import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/modules/json_deserializer.dart';
 import 'package:flutter_client/pages/home.dart';
@@ -24,38 +25,24 @@ class AuthUserStatusResponse
   }
 }
 class IntroPageState extends State<IntroPage> {
-  bool isLoading = false;
-  ApiResponse response;
+
+  RequestContext rCtx = RequestContext();
 
   void checkStatus() async {
-    // Navigator.of(context).push(
-    //     MaterialPageRoute(builder: (ctx) => LoginPage()));
-    setState(() {
-      response = null;
-      isLoading = true; 
-    });
+    setState(() {});
 
-    var request = await makeRequest("GET", "auth/user-status", null, AuthUserStatusResponse.fromMap);
-    if(request.type == ApiResponseType.Ok)
+    var result = await sessionUserStatus(rCtx);
+    if(result.type == ApiResponseType.Ok)
     {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => HomePage()));
     }
-    else if(request.type == ApiResponseType.Error && request.error.name == "ERR_AUTH_UNAUTHORIZED")
+    else if(result.type == ApiResponseType.Error && result.error.name == "ERR_AUTH_UNAUTHORIZED")
     {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => LoginPage()));
     }
-    else
-    {
-      setState((){
-        response = request;
-      });
-    }
-
-    setState(() {
-      isLoading = false;
-    });
+    setState(() {});
   }
 
   @override
@@ -68,7 +55,6 @@ class IntroPageState extends State<IntroPage> {
           child: SafeArea(
             child: Center(
               child: Column(
-                // mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(height: 16),
                   Text(
@@ -79,8 +65,6 @@ class IntroPageState extends State<IntroPage> {
                     ),
                   ),
 
-                  SizedBox(height: 16),
-                  WdResponseError(response),
                   SizedBox(height: 16),
 
                   Container(
@@ -96,7 +80,7 @@ class IntroPageState extends State<IntroPage> {
 
                   SizedBox(height: 16),
 
-                  isLoading ? CircularProgressIndicator() : Container( ),
+                  rCtx.isLoading ? CircularProgressIndicator() : Container(),
 
                 ],
               ),

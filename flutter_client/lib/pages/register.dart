@@ -14,29 +14,22 @@ class RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormFieldState<String>> _emailKey = GlobalKey<FormFieldState<String>>();
   final GlobalKey<WdPasswordBoxState> _passwordKey = GlobalKey<WdPasswordBoxState>();
 
-  bool isLoading = false;
-  ApiResponse lastResponse;
+  final rCtx = new RequestContext();
+
   void register() async
   {
-    setState(() {
-      isLoading = true;
-      lastResponse = null;
-    });
+    setState(() {});
+
     var requestData = <String, dynamic>{
       "email":_emailKey.currentState.value,
       "password":_passwordKey.currentState.value,
     };
-    var response = await makeRequest("POST", "auth/register", requestData);
-    setState(() {
-      lastResponse = response;
-    });
+    var response = await rCtx.requestPost("auth/register", requestData);
+    setState(() {});
     if(response.type == ApiResponseType.Ok)
     {
       Navigator.of(context).pop();
     }
-    setState(() {
-      isLoading = false;
-    });
   }
 
   @override
@@ -66,7 +59,7 @@ class RegisterPageState extends State<RegisterPage> {
                   WdPasswordBox(_passwordKey, "كلمة المرور"),
                   SizedBox(height:16),
                   
-                  WdResponseError(lastResponse),
+                  rCtx.errorWidget(),
                   SizedBox(height:16),
 
                   Container(
@@ -81,7 +74,7 @@ class RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height:12),
 
-                  isLoading ? CircularProgressIndicator(
+                  rCtx.isLoading ? CircularProgressIndicator(
                   ) : Container( ),
 
                 ],
