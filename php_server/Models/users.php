@@ -12,6 +12,13 @@ function mdl_user_get($user_id)
   if(count($users))return $users[0];
   return null;
 }
+function mdl_user_get_status($user_id)
+{
+  $user = mdl_user_get($user_id);
+  return [
+    'email'=>$user['email'],
+  ];
+}
 
 function mdl_user_create($email, $password)
 {

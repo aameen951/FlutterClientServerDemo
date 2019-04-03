@@ -41,8 +41,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return WdHotReloadNotifier(
       callback: () async {
-        var i18nData = await rootBundle.loadString("i18n/ar.json");
-        i18nLoad(i18nData);
+        reloadI18n();
       },
       child:MaterialApp(
         title: 'FlutterClientServerDemo',

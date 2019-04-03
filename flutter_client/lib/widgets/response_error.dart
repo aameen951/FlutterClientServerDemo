@@ -7,50 +7,93 @@ import 'package:flutter_client/modules/i18n.dart';
 class WdResponseError extends StatelessWidget
 {
   final ApiResponse response;
+
   WdResponseError(this.response);
 
   @override
   Widget build(BuildContext context) {
-    if(response?.type == ApiResponseType.FormError)
+    Widget result;
+    if(response == null || response.type == responseType_Ok || response.type == responseType_NotAuthorized)
     {
-      var r = response.formError;
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Text(i18n("errors.${r.name}"),
-          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-        )
-      );
+      result = Container();
     }
-    if(response?.type == ApiResponseType.Error)
+    else if(response.type == responseType_BadRequest)
     {
-      var r = response.error;
-      return Directionality(
+      String name = response.data['name'];
+      String message = response.data['message'];
+
+      result = Directionality(
         textDirection: TextDirection.ltr,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(r.name, 
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            r.message != null ? Text(r.message,
-              style: TextStyle(
-                color: Colors.red,
-              ),
-            ) : Container(),
-            r.params != null ? Text(r.params.toString(),
-              style: TextStyle(
-                color: Colors.red,
-              ),
-            ) : Container(),
-
-          ]
-        ,)
+            Text("Bad Request: $name", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            Text(message, style: TextStyle(color: Colors.red)),
+          ],
+        ),
       );
     }
+    else if(response.type == responseType_ServerError)
+    {
+      String name = response.data['name'];
+      String message = response.data['message'];
+      String trace = response.data['trace'];
 
-    return Container();
+      result = Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text("Server Error: $name", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            Text(message, style: TextStyle(color: Colors.red)),
+          ],
+        ),
+      );
+    }
+    else if(response.type == responseType_ClientError)
+    {
+      String name = response.data['name'];
+      String message = response.data['message'];
+      String responseBody = response.data.containsKey('response') ? response.data['response'] : null;
+      Exception exception = response.data.containsKey('exception') ? response.data['exception'] : null;
+
+      result = Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text("Client Error: $name", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            Text(message, style: TextStyle(color: Colors.red)),
+            Text(exception.toString(), style: TextStyle(color: Colors.red)),
+            Text("Response:", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            Text(responseBody, style: TextStyle(color: Colors.red)),
+          ],
+        ),
+      );
+    }
+    else if(response.type == responseType_ConnectionError)
+    {
+      Exception exception = response.data['exception'];
+
+      result = Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text("Connection Error", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            Text(exception.toString(), style: TextStyle(color: Colors.red)),
+          ],
+        ),
+      );
+    }
+    else if(response.type == responseType_FormError)
+    {
+      String errorName = response.data['name'];
+      dynamic errorParams = response.data['params'];
+      result = Container(
+        child: Text(i18n("error.$errorName"), style: TextStyle(color: Colors.red)),
+      );
+    }
+    return result;
   }
 }

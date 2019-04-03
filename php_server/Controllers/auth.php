@@ -2,8 +2,6 @@
 
 define_str('USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD');
 define_str('USR_ERR_AUTH_EMAIL_USED');
-define_str('ERR_AUTH_UNAUTHORIZED');
-define_str('ERR_AUTH_BAD_AUTH_HEADER');
 
 
 router_register(POST, 'auth/register', [], function($ctx){
@@ -23,11 +21,9 @@ router_register(POST, 'auth/register', [], function($ctx){
 router_register(GET, 'auth/user-status', ['require_auth'=>true], function($ctx){
   $user_id = $ctx->session['user'];
 
-  $user = mdl_user_get($user_id);
+  $status = mdl_user_get_status($user_id);
 
-  return JsonOk([
-    'email'=>$user['email'],
-  ]);
+  return JsonOk($status);
 });
 
 router_register(POST, 'auth/login', [], function($ctx){
@@ -44,7 +40,7 @@ router_register(POST, 'auth/login', [], function($ctx){
 
   $token = mdl_session_create($user);
 
-  return JsonOk(['token'=>$token]);
+  return JsonOk(['token'=>$token, 'user_status'=>mdl_user_get_status($user['id'])]);
 });
 
 router_register(POST, 'auth/logout', ['require_auth'=>true], function($ctx){
@@ -53,6 +49,7 @@ router_register(POST, 'auth/logout', ['require_auth'=>true], function($ctx){
 
   return JsonOk();
 });
+
 
 function auth_request_handler(RequestCtx $ctx, $opt)
 {
@@ -70,11 +67,11 @@ function auth_request_handler(RequestCtx $ctx, $opt)
     }
     else
     {
-      json_error(400, ERR_AUTH_BAD_AUTH_HEADER);
+      bad_request(400, "ERR_AUTH_BAD_AUTH_HEADER", "The Authorization header is bad");
     }
   }
   if($opt['require_auth'] && !$ctx->session)
   {
-    json_error(401, ERR_AUTH_UNAUTHORIZED);
+    custom_response(401, "not_authorized");
   }
 }

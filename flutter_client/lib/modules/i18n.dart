@@ -1,6 +1,12 @@
 
+import 'package:flutter/services.dart';
 import 'package:flutter_client/modules/json_deserializer.dart';
 
+void reloadI18n() async
+{
+  var i18nData = await rootBundle.loadString("i18n/ar.json");
+  i18nLoad(i18nData);
+}
 
 void visitor(String preKey, dynamic node, void add(String key, String value))
 {

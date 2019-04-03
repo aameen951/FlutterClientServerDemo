@@ -1,15 +1,6 @@
 <?php
 
-// ****************************************
-// NOTE(ameen): START OF USER CONFIGURATION
-
-define('URL_PREFIX', "fcsd");
-
-define('DB_USERNAME', "phpuser");
-define('DB_PASSWORD', "phppassword");
-define('DB_DATABASE_NAME', "fcsd");
-// ****************************************
-
+require_once "config.php";
 
 // NOTE(ameen): Helpers
 define('PATH_SEP', PHP_OS === 'WINNT' ? '\\' : '/');
@@ -43,17 +34,25 @@ function _json_output($code, $type, $body)
   echo json_encode(['type'=>$type, 'body'=>$body]);
   die;
 }
-function json_error($code, $error_name, $error_message = null, $details=null)
+function bad_request($code, $error_name, $error_message)
 {
-  $error = ['name'=>$error_name];
-  $error['message'] = $error_message;
-  $error['params'] = $details;
-  _json_output($code, 'error', $error);
+  _json_output($code, 'bad_request', [
+    'name'=>$error_name,
+    'message'=>$error_message,
+  ]);
 }
-function fatal_error($error_name, $error_message = null)
+function fatal_error($error_name, $error_message)
 {
-  json_error(500, $error_name, $error_message);
+  _json_output(500, 'server_error', [
+    'name'=>$error_name,
+    'message'=>$error_message,
+  ]);
 }
+function custom_response($code, $type, $data = null)
+{
+  _json_output($code, $type, $data);
+}
+
 class JsonRes
 {
   public $type;
@@ -229,7 +228,7 @@ function router_dispatch()
 
   if(!isset($router_table[$method]))
   {
-    json_error(400, "HTTP_BAD_METHOD");
+    bad_request(405, "HTTP_METHOD_NOT_ALLOWED", "Method [$method] is not allowed");
   }
   
   $request_headers = [];
@@ -243,14 +242,14 @@ function router_dispatch()
   $request_data = file_get_contents('php://input');
   if($ctx->get_header('Content-Type') !== 'application/json')
   {
-    json_error(400, "UNSUPPORTED_REQUEST_FORMAT", "Request payload must have JSON format");
+    bad_request(400, "UNSUPPORTED_REQUEST_FORMAT", "Request body must have JSON format");
   }
   if(trim($request_data))
   {
     $request_data = json_decode($request_data, true);
     if(json_last_error() !== JSON_ERROR_NONE)
     {
-      json_error(400, "BAD_REQUEST_FORMAT", "Request payload is not a valid JSON format");
+      bad_request(400, "BAD_REQUEST_FORMAT", "Request body is not a valid JSON format");
     }
   }
 
@@ -268,13 +267,13 @@ function router_dispatch()
     $result_obj = $route_data['cb']($ctx);
     if(!($result_obj instanceof JsonRes))
     {
-      fatal_error("BAD_RETURN_VALUE_FROM_CONTROLLER", "Controller '$method:$route' didn't return the result using JsonOk/JsonFormError/...");
+      fatal_error("BAD_RETURN_VALUE_FROM_CONTROLLER", "Controller [$method:$route] didn't return the result using JsonOk/JsonFormError/...");
     }
 
-    _json_output(200, $result_obj->type, $result_obj->data);
+    custom_response(200, $result_obj->type, $result_obj->data);
   }
   else
   {
-    json_error(404, "HTTP_NOT_FOUND");
+    bad_request(404, "HTTP_NOT_FOUND", "Route [$method:$route] was not found");
   }
 }

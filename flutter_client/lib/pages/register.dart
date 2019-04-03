@@ -26,7 +26,7 @@ class RegisterPageState extends State<RegisterPage> {
     };
     var response = await rCtx.requestPost("auth/register", requestData);
     setState(() {});
-    if(response.type == ApiResponseType.Ok)
+    if(response.type == responseType_Ok)
     {
       Navigator.of(context).pop();
     }

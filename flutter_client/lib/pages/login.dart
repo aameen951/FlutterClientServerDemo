@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
     var email = _emailKey.currentState.value;
     var password = _passwordKey.currentState.value;
     var response = await sessionLogin(rCtx, email, password);
-    if(response.type == ApiResponseType.Ok)
+    if(response.type == responseType_Ok)
     {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (ctx) => HomePage()));

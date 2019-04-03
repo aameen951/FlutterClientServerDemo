@@ -7,83 +7,28 @@ import 'dart:convert' as convert;
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-enum ApiResponseType
-{
-  Ok,
-  FormError,
-  Error
-}
-class ApiResponseFormError
-{
-  String name;
-  dynamic params;
-  static ApiResponseFormError fromMap(Map<String, dynamic> map)
-  {
-    var result = ApiResponseFormError();
-    result.name = Deserializer.readProperty<String>(map, "name");
-    result.params = Deserializer.readProperty<dynamic>(map, "params");
-    return result;
-  }
-}
-class ApiResponseError
-{
-  String name;
-  String message;
-  dynamic params;
-  static ApiResponseError fromMap(Map<String, dynamic> map)
-  {
-    var result = ApiResponseError();
-    result.name = Deserializer.readProperty<String>(map, "name");
-    result.message = Deserializer.readProperty<String>(map, "message");
-    result.params = Deserializer.readProperty<dynamic>(map, "params");
-    return result;
-  }
-}
-class ApiResponse<T>
-{
-  ApiResponseType type;
-  T data; // valid when type == Ok
-  ApiResponseFormError formError; // valid when type == FormError
-  ApiResponseError error; // // valid when type == Error
+const responseType_Ok            = "ok";
+const responseType_NotAuthorized = "not_authorized";
+const responseType_FormError     = "form_error";
+const responseType_ServerError   = "server_error";
+const responseType_BadRequest    = "bad_request";
+const responseType_ClientError   = "client_error";
+const responseType_ConnectionError   = "connection_error";
 
-  static ApiResponse<T> fromMap<T>(dynamic obj, [T reader(dynamic obj)])
+class ApiResponse
+{
+  String type;
+  Map<String, dynamic> data;
+
+  ApiResponse(this.type, this.data);
+
+  static ApiResponse fromMap(dynamic obj)
   {
     var map = Deserializer.toMap(obj);
-    var result = ApiResponse<T>();
-    var typeStr = Deserializer.readProperty<String>(map, "type").toLowerCase();
-    if(typeStr == 'ok')
-    {
-      result.type = ApiResponseType.Ok;
-      result.data = reader(Deserializer.readProperty<dynamic>(map, "body"));
-    }
-    else if(typeStr == 'form_error')
-    {
-      result.type = ApiResponseType.FormError;
-      result.formError = ApiResponseFormError.fromMap(Deserializer.readProperty<Map<String, dynamic>>(map, "body"));
-    }
-    else if(typeStr == 'error')
-    {
-      result.type = ApiResponseType.Error;
-      result.error = ApiResponseError.fromMap(Deserializer.readProperty<Map<String, dynamic>>(map, "body"));
-    }
-    else
-    {
-      throw DeserilizationError("Unknown response type '$typeStr'");
-    }
-    return result;
+    var type = Deserializer.readProperty<String>(map, "type").toLowerCase();
+    var data = Deserializer.readProperty(map, "body");
+    return ApiResponse(type, data);
   }
-}
-ApiResponse<T> protocolError<T>(String name, String message, [Map<String, dynamic> params])
-{
-  var error = <String, dynamic>{
-    "type": "error",
-    "body": <String, dynamic>{
-      "name": name,
-      "message": message,
-      "params": params,
-    },
-  };
-  return ApiResponse.fromMap(error);
 }
 
 io.HttpClient _httpClient;
@@ -94,7 +39,7 @@ class RequestContext
 {
   bool isLoading = false;
   ApiResponse lastResponse;
-  bool get isError => lastResponse.type != ApiResponseType.Ok;
+  bool get isError => lastResponse.type != responseType_Ok;
 
   Widget errorWidget()
   {
@@ -130,11 +75,17 @@ void setHttpClientAuthToken(String token) async
   var pref = await SharedPreferences.getInstance();
   await pref.setString(_httpClientAuthTokenStorageKey, token);
 }
-Future<ApiResponse<T>> makeRequest<T>(String method, String path, dynamic requestData, [T reader(dynamic obj)]) async
+Uri buildUrl(String path)
 {
   String scheme = configHttpServerUseSecureProtocol ? "https" : "http";
   String fullPath = configHttpServerPrefix != null ? "$configHttpServerPrefix/$path" : path;
   var url = Uri(scheme: scheme, host:configHttpServerDomain, port:configHttpServerPort, path:fullPath);
+  return url;
+}
+Future<ApiResponse> makeRequest(String method, String path, dynamic requestData) async
+{
+  ApiResponse result;
+  var url = buildUrl(path);
   try{
     var request = await _httpClient.openUrl(method, url);
     request.headers.contentType = io.ContentType("application", "json");
@@ -150,43 +101,40 @@ Future<ApiResponse<T>> makeRequest<T>(String method, String path, dynamic reques
     }
     var response = await request.close();
     var contentType = response.headers.contentType;
-    ApiResponse<T> result;
     if(contentType == null)
     {
-      result = protocolError("NON_JSON_RESPONSE", "Server did not specify the Content-Type header");
+      result = ApiResponse(responseType_ClientError, <String, dynamic>{
+        'name': "NON_JSON_RESPONSE",
+        'message': "Server did not specify the Content-Type header",
+      });
     }
     else if(contentType?.mimeType != "application/json")
     {
-      result = protocolError("NON_JSON_RESPONSE", "Server responeded with payload that isn't json (got: ${contentType.mimeType})");
+      result = ApiResponse(responseType_ClientError, <String, dynamic>{
+        'name': "NON_JSON_RESPONSE",
+        'message': "Server response isn't json (got: ${contentType.mimeType})",
+      });
     }
     else
     {
       var responseDataStr = await response.transform(convert.utf8.decoder).join();
       try {
         var responseMap = Deserializer.strToMap(responseDataStr);
-        result = ApiResponse.fromMap<T>(responseMap, reader ?? (x)=>x);
+        result = ApiResponse.fromMap(responseMap);
       } on DeserilizationError catch(e) {
-        result = protocolError<T>(
-          "BAD_RESPONSE_FORMAT", 
-          "Server responeded with payload that has bad/unexpected format",
-          <String, dynamic>{
-            "exception": e,
-            "payload":responseDataStr,
-          }
-        );
+        result = ApiResponse(responseType_ClientError, <String, dynamic>{
+          'name': "BAD_RESPONSE",
+          'message': "Server response has bad/unexpected format",
+          'response': responseDataStr,
+          'exception': e,
+        });
       }
     }
-    print(result.type);
-    return result;
   }catch(e){
-    return protocolError<T>(
-      "COULD_NOT_CONNECT_TO_SERVER", 
-      "Could not connect to the server",
-      <String, dynamic>{
-        "exception": e,
-      }
-    );
+    return ApiResponse(responseType_ConnectionError, <String, dynamic>{
+      'exception': e,
+    });
   }
-  return null;
+  return result;
 }
 

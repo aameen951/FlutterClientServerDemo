@@ -13,17 +13,6 @@ class IntroPage extends StatefulWidget {
   IntroPageState createState() => IntroPageState();
 }
 
-class AuthUserStatusResponse
-{
-  String email;
-  static AuthUserStatusResponse fromMap(dynamic obj)
-  {
-    var map = Deserializer.toMap(obj);
-    var result = AuthUserStatusResponse();
-    result.email = Deserializer.readProperty<String>(map, "email");
-    return result;
-  }
-}
 class IntroPageState extends State<IntroPage> {
 
   RequestContext rCtx = RequestContext();
@@ -31,13 +20,13 @@ class IntroPageState extends State<IntroPage> {
   void checkStatus() async {
     setState(() {});
 
-    var result = await sessionUserStatus(rCtx);
-    if(result.type == ApiResponseType.Ok)
+    var response = await sessionCheckUserStatus(rCtx);
+    if(response.type == responseType_Ok)
     {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => HomePage()));
     }
-    else if(result.type == ApiResponseType.Error && result.error.name == "ERR_AUTH_UNAUTHORIZED")
+    else if(response.type == responseType_NotAuthorized)
     {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => LoginPage()));
@@ -65,6 +54,8 @@ class IntroPageState extends State<IntroPage> {
                     ),
                   ),
 
+                  SizedBox(height: 16),
+                  rCtx.errorWidget(),
                   SizedBox(height: 16),
 
                   Container(

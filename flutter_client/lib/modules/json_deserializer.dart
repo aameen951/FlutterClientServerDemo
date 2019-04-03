@@ -1,8 +1,14 @@
 import 'dart:convert' as convert;
 
-class DeserilizationError extends Error {
+class DeserilizationError implements Exception {
   String message;
+
   DeserilizationError(this.message);
+
+  @override
+  String toString(){
+    return "DeserializationError: $message";
+  }
 }
 
 class Deserializer
