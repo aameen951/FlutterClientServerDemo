@@ -1,6 +1,27 @@
 {
-  "errors":{
+  "error":{
     "USR_ERR_AUTH_INCORRECT_EMAIL_PASSWORD": "الإيميل أو كلمة المرور خطأ",
     "USR_ERR_AUTH_EMAIL_USED": "الإيميل مستخدم مسبقا"
+  },
+  "general":{
+    "no-results":"لاتوجد نتائج"
+  },
+  "command":{
+    "create":"إنشاء",
+    "logout":"تسجيل الخروج"
+  },
+  "data":{
+    "customer":{
+      "name":"الاسم",
+      "mobile":"الجوال"
+    }
+  },
+  "page":{
+    "create-customer":{
+      "title":"عميل جديد"
+    },
+    "customers":{
+      "title":"العملاء"
+    }
   }
 }

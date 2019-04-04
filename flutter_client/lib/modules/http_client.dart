@@ -18,7 +18,7 @@ const responseType_ConnectionError   = "connection_error";
 class ApiResponse
 {
   String type;
-  Map<String, dynamic> data;
+  dynamic data;
 
   ApiResponse(this.type, this.data);
 
@@ -88,10 +88,10 @@ Future<ApiResponse> makeRequest(String method, String path, dynamic requestData)
   var url = buildUrl(path);
   try{
     var request = await _httpClient.openUrl(method, url);
-    request.headers.contentType = io.ContentType("application", "json");
+    request.headers.set("Content-Type", io.ContentType("application", "json").toString());
     if(_httpClientAuthToken != null)
     {
-      request.headers.add("Authorization", "Bearer $_httpClientAuthToken");
+      request.headers.set("Authorization", "Bearer $_httpClientAuthToken");
     }
     if(method != 'GET' && method != 'HEAD')
     {
@@ -130,7 +130,7 @@ Future<ApiResponse> makeRequest(String method, String path, dynamic requestData)
         });
       }
     }
-  }catch(e){
+  } on Exception catch(e){
     return ApiResponse(responseType_ConnectionError, <String, dynamic>{
       'exception': e,
     });
