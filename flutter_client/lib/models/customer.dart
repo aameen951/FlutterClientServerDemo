@@ -16,40 +16,39 @@ class Customer
     mobile = Deserializer.readProperty<String>(map, 'mobile');
   }
 }
-
 class CustomerStore with ListenableData
 {
   List<Customer> _customers = [];
 
-  int _count = 0;
-  get count => _count;
-  set count(int c) {
-    _count = c;
-    notify();
-  }
   List<Customer> get customers => _customers;
 
-  Future<Customer> create(RequestContext ctx, String name, String mobile) async
+  Future<ActionResult> create(String name, String mobile) async
   {
     var requestData = <String, dynamic>{
       'name': name,
       'mobile': mobile,
     };
-    var response = await ctx.requestPost('customer/create', requestData);
-    Customer result;
+    var response = await makePostRequest('customer/create', requestData);
+    ActionResult result;
     if(response.type == responseType_Ok)
     {
-      result = Customer.fromMap(response.data);
-      _customers.add(result);
+      var c = Customer.fromMap(response.data);
+      _customers.add(c);
+      notify();
+      result = ActionResult.ok(c);
+    }
+    else if(response.type == responseType_FormError)
+    {
+      result = ActionResult.formError(response);
     }
     return result;
   }
 
-  Future<List<Customer>> getAll(RequestContext ctx) async
+  Future<List<Customer>> getAll() async
   {
     var requestData = <String, dynamic>{
     };
-    var response = await ctx.requestGet('customers', requestData);
+    var response = await makeGetRequest('customers', requestData);
     var result = List<Customer>();
     if(response.type == responseType_Ok)
     {
@@ -59,6 +58,7 @@ class CustomerStore with ListenableData
       });
     }
     _customers = result;
+    notify();
     return result;
   }
 }

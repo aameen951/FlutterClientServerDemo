@@ -15,26 +15,7 @@ const responseType_BadRequest    = "bad_request";
 const responseType_ClientError   = "client_error";
 const responseType_ConnectionError   = "connection_error";
 
-class ApiResponse
-{
-  String type;
-  dynamic data;
-
-  ApiResponse(this.type, this.data);
-
-  static ApiResponse fromMap(dynamic obj)
-  {
-    var map = Deserializer.toMap(obj);
-    var type = Deserializer.readProperty<String>(map, "type").toLowerCase();
-    var data = Deserializer.readProperty(map, "body");
-    return ApiResponse(type, data);
-  }
-}
-
-io.HttpClient _httpClient;
-String _httpClientAuthToken;
-const _httpClientAuthTokenStorageKey = "AUTH_SESSION_TOKEN";
-
+@deprecated
 class RequestContext
 {
   bool isLoading = false;
@@ -60,6 +41,55 @@ class RequestContext
     => request("POST", path, requestData);
     
 }
+
+enum ActionResultType
+{
+  Ok,
+  FormError,
+  FieldError,
+
+  Unknown,
+}
+class ActionResult
+{
+  ActionResultType type;
+  
+  bool get isOk => type == ActionResultType.Ok;
+  bool get isFormError => type == ActionResultType.FormError;
+
+  dynamic data;
+
+  ActionResult.ok(dynamic data)
+  {
+    type = ActionResultType.Ok;
+    this.data = data;
+  }
+  ActionResult.formError(dynamic data)
+  {
+    type = ActionResultType.FormError;
+    this.data = data;
+  }
+}
+
+class ApiResponse
+{
+  String type;
+  dynamic data;
+
+  ApiResponse(this.type, this.data);
+
+  static ApiResponse fromMap(dynamic obj)
+  {
+    var map = Deserializer.toMap(obj);
+    var type = Deserializer.readProperty<String>(map, "type").toLowerCase();
+    var data = Deserializer.readProperty(map, "body");
+    return ApiResponse(type, data);
+  }
+}
+
+io.HttpClient _httpClient;
+String _httpClientAuthToken;
+const _httpClientAuthTokenStorageKey = "AUTH_SESSION_TOKEN";
 
 void initHttpClient() async
 {
@@ -137,4 +167,8 @@ Future<ApiResponse> makeRequest(String method, String path, dynamic requestData)
   }
   return result;
 }
+Future<ApiResponse> makeGetRequest(String path, dynamic requestData) async
+  => makeRequest("GET", path, requestData);
+Future<ApiResponse> makePostRequest(String path, dynamic requestData) async
+  => makeRequest("POST", path, requestData);
 

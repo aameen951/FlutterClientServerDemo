@@ -4,6 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/modules/i18n.dart';
 
+class WdFormError extends StatelessWidget
+{
+  final ApiResponse response;
+
+  WdFormError(this.response);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget result = Container();
+    if(response != null && response.type == responseType_FormError)
+    {
+      String errorName = response.data['name'];
+      dynamic errorParams = response.data['params'];
+      result = Container(
+        child: Text(i18n("error.$errorName"), style: TextStyle(color: Colors.red)),
+      );
+    }
+    return result;
+  }
+}
+
 class WdResponseError extends StatelessWidget
 {
   final ApiResponse response;
@@ -13,7 +34,11 @@ class WdResponseError extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     Widget result;
-    if(response == null || response.type == responseType_Ok || response.type == responseType_NotAuthorized)
+    if(response == null || 
+      response.type == responseType_Ok || 
+      response.type == responseType_FormError || 
+      response.type == responseType_NotAuthorized
+    )
     {
       result = Container();
     }
@@ -84,14 +109,6 @@ class WdResponseError extends StatelessWidget
             Text(exception.toString(), style: TextStyle(color: Colors.red)),
           ],
         ),
-      );
-    }
-    else if(response.type == responseType_FormError)
-    {
-      String errorName = response.data['name'];
-      dynamic errorParams = response.data['params'];
-      result = Container(
-        child: Text(i18n("error.$errorName"), style: TextStyle(color: Colors.red)),
       );
     }
     return result;

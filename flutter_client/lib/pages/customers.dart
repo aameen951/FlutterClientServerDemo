@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_client/models/customer.dart';
 import 'package:flutter_client/modules/data_listener.dart';
-import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/modules/i18n.dart';
+import 'package:flutter_client/widgets/response_error.dart';
 
 class CreateCustomerPage extends StatefulWidget
 {
@@ -17,22 +17,29 @@ class CreateCustomerPageState extends State<CreateCustomerPage>
   var nameCtrl = TextEditingController();
   var mobileCtrl = TextEditingController();
 
-  RequestContext rCtx = RequestContext();
+  bool isLoading = false;
+  dynamic formError;
 
   void create() async
   {
-    setState((){});
+    setState((){
+      isLoading = true;
+      formError = null;
+    });
     var name = nameCtrl?.text;
     var mobile = mobileCtrl?.text;
-    var result = await sCustomers.create(rCtx, name, mobile);
-    if(result != null)
+    var result = await sCustomers.create(name, mobile);
+    if(result.isOk)
     {
-      print(result.id);
-      print(result.name);
-      print(result.mobile);
       Navigator.of(context).pop();
     }
-    setState((){});
+    else if(result.isFormError)
+    {
+      formError = result.data;
+    }
+    setState((){
+      isLoading = false;
+    });
   }
 
   @override
@@ -62,9 +69,11 @@ class CreateCustomerPageState extends State<CreateCustomerPage>
                   ),
                   controller: mobileCtrl,
                 ),
+
                 SizedBox(height: 16),
-                rCtx.errorWidget(),
+                WdFormError(formError),
                 SizedBox(height: 16),
+
                 Container(
                   width: double.infinity,
                   child: RaisedButton(
@@ -73,7 +82,7 @@ class CreateCustomerPageState extends State<CreateCustomerPage>
                   )
                 ),
                 SizedBox(height: 16),
-                rCtx.isLoading ? CircularProgressIndicator() : Container(),
+                isLoading ? Center(child:CircularProgressIndicator()) : Container(),
               ],
             ),
           ),
@@ -87,12 +96,26 @@ class CustomersPage extends StatefulWidget
 {
   @override
   State<StatefulWidget> createState() => CustomersPageState();
-
 }
 class CustomersPageState extends State<CustomersPage>
 {
   var _key = GlobalKey<RefreshIndicatorState>();
-  RequestContext rCtx = RequestContext();
+
+  bool isLoading = false;
+
+  @override
+  void initState(){
+    super.initState();
+    setState(() {
+      isLoading = true;
+    });
+    sCustomers.getAll().then((r){
+      setState(() {
+        isLoading = false;
+      });
+      return r;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,35 +128,30 @@ class CustomersPageState extends State<CustomersPage>
         child: RefreshIndicator(
           key: _key,
           onRefresh: ()async{
-            // _customers = await sCustomers.getAll(rCtx);
-            // setState(() {});
+            await sCustomers.getAll();
           },
           child: DataListener(
-            models: [],
+            models: [sCustomers],
             builder: (ctx){
-              return Text("Hello ${sCustomers.count}");
+              return isLoading ? Center(
+                child:CircularProgressIndicator()
+              ) : ListView.builder(
+                itemCount: sCustomers.customers.length,
+                itemBuilder: (ctx, idx){
+                  var c = sCustomers.customers[idx];
+                  return Text("Name: ${c.name}");
+                },
+              );
             }
           ),
-          // _child: _customers != null && _customers.length > 0 ? ListView.builder(
-          //   itemCount: _customers.length,
-          //   itemBuilder: (ctx, idx){
-          //     return Text("Name: ${_customers[idx].name}");
-          //   },
-          // ) : ListView(
-          //   children: <Widget>[
-          //     rCtx.errorWidget(),
-          //     Text(i18n("general.no-results"), textAlign: TextAlign.center),
-          //   ],
-          // ),
         )
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         tooltip: i18n("page.create-customer.title"),
         onPressed: (){
-          sCustomers.count++;
-          // Navigator.of(context).push(
-          //   MaterialPageRoute(builder: (ctx) => CreateCustomerPage()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (ctx) => CreateCustomerPage()));
         },
       ),
     );
