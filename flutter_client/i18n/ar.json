@@ -17,6 +17,9 @@
     }
   },
   "page":{
+    "home":{
+      "title":"الصفحة الرئيسية"
+    },
     "create-customer":{
       "title":"عميل جديد"
     },

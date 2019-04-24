@@ -1,7 +1,4 @@
-
-
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -53,14 +50,20 @@ class DataListenerState extends State<DataListener>
   @override
   void initState() {
     super.initState();
-    widget.models.forEach((m){m.addListener(_changeHandler);});
+    widget.models.forEach((ListenableData m){
+      m.addListener(_changeHandler);
+    });
   }
   @override
   void didUpdateWidget(DataListener oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.models != oldWidget.models) {
-      oldWidget.models.forEach((m){m.removeListener(_changeHandler);});
-      widget.models.forEach((m){m.addListener(_changeHandler);});
+      oldWidget.models.forEach((ListenableData m){
+        m.removeListener(_changeHandler);
+      });
+      widget.models.forEach((ListenableData m){
+        m.addListener(_changeHandler);
+      });
     }
   }
   @override
