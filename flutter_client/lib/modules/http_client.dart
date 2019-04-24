@@ -15,33 +15,6 @@ const responseType_BadRequest    = "bad_request";
 const responseType_ClientError   = "client_error";
 const responseType_ConnectionError   = "connection_error";
 
-@deprecated
-class RequestContext
-{
-  bool isLoading = false;
-  ApiResponse lastResponse;
-  bool get isError => lastResponse.type != responseType_Ok;
-
-  Widget errorWidget()
-  {
-    return WdResponseError(lastResponse);
-  }
-
-  Future<ApiResponse> request(String method, String path, dynamic requestData) async
-  {
-    isLoading = true;
-    var result = await makeRequest(method, path, requestData);
-    isLoading = false;
-    lastResponse = result;
-    return result;
-  }
-  Future<ApiResponse> requestGet(String path, dynamic requestData) async
-    => request("GET", path, requestData);
-  Future<ApiResponse> requestPost(String path, dynamic requestData) async
-    => request("POST", path, requestData);
-    
-}
-
 enum ActionResultType
 {
   Ok,

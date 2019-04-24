@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_client/models/session.dart';
 import 'package:flutter_client/modules/http_client.dart';
+import 'package:flutter_client/modules/include.dart';
 import 'package:flutter_client/pages/home.dart';
 import 'package:flutter_client/pages/login.dart';
 import 'package:flutter_client/widgets/include.dart';
@@ -13,13 +14,11 @@ class IntroPage extends StatefulWidget {
 }
 
 class IntroPageState extends State<IntroPage> {
-
-  RequestContext rCtx = RequestContext();
+  ApiResponse lastResponse;
 
   void checkStatus() async {
-    setState(() {});
-
-    var response = await sessionCheckUserStatus(rCtx);
+    var response = await sSession.checkUserStatus();
+    lastResponse = response;
     if(response.type == responseType_Ok)
     {
       Navigator.of(context).push(
@@ -30,7 +29,6 @@ class IntroPageState extends State<IntroPage> {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => LoginPage()));
     }
-    setState(() {});
   }
 
   @override
@@ -38,37 +36,40 @@ class IntroPageState extends State<IntroPage> {
     return WdPage(
       title: null,
       child: Center(
-        child: Column(
-          children: <Widget>[
-            SizedBox(height: 16),
-            Text(
-              "مقدمة",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 30,
-              ),
-            ),
+        child: DataListener(
+          models: [sSession],
+          builder: (context){
+            return Column(
+              children: <Widget>[
+                SizedBox(height: 16),
+                Text(
+                  "مقدمة",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                  ),
+                ),
 
-            SizedBox(height: 16),
-            rCtx.errorWidget(),
-            SizedBox(height: 16),
+                SizedBox(height: 16),
+                WdResponseError(lastResponse),
+                SizedBox(height: 16),
 
-            Container(
-              width: double.infinity,
-              child: RaisedButton(
-                child: Text("التالي"),
-                color: Theme.of(context).primaryColor,
-                padding: EdgeInsets.all(10),
-                textColor: Colors.white,
-                onPressed: checkStatus,
-              ),
-            ),
+                Container(
+                  width: double.infinity,
+                  child: RaisedButton(
+                    child: Text("التالي"),
+                    color: Theme.of(context).primaryColor,
+                    padding: EdgeInsets.all(10),
+                    textColor: Colors.white,
+                    onPressed: checkStatus,
+                  ),
+                ),
 
-            SizedBox(height: 16),
-
-            rCtx.isLoading ? CircularProgressIndicator() : Container(),
-
-          ],
+                SizedBox(height: 16),
+                sSession.isCheckingStatus ? CircularProgressIndicator() : Container(),
+              ],
+            );
+          },
         ),
       )
     );

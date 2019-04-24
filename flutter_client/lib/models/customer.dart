@@ -1,7 +1,4 @@
-
-import 'package:flutter_client/modules/data_listener.dart';
-import 'package:flutter_client/modules/http_client.dart';
-import 'package:flutter_client/modules/json_deserializer.dart';
+import 'package:flutter_client/modules/include.dart';
 
 class Customer
 {
@@ -16,36 +13,7 @@ class Customer
     mobile = Deserializer.readProperty<String>(map, 'mobile');
   }
 }
-
-enum LoadingState
-{
-  Idle,
-  LoadingFirstTime,
-  Updating,
-  Creating,
-  Editing,
-  Deleting,
-}
-class Loadable
-{
-  String state;
-  dynamic stateData;
-  void setLoading(String newState, {dynamic newStateData})
-  {
-    state = newState;
-    stateData = newStateData;
-  }
-  void clearLoading()
-  {
-    state = null;
-    stateData = null;
-  }
-  bool isLoading(String state, {dynamic stateData})
-  {
-    return this.state == state && this.stateData == stateData;
-  }
-}
-class CustomerStore with ListenableData, Loadable
+class CustomerStore with ListenableData
 {
   List<Customer> _customers;
 
@@ -79,7 +47,6 @@ class CustomerStore with ListenableData, Loadable
       result = ActionResult.formError(response);
     }
     clearLoading();
-    notify();
     return result;
   }
 
@@ -99,7 +66,6 @@ class CustomerStore with ListenableData, Loadable
     }
     _customers = result;
     clearLoading();
-    notify();
     return result;
   }
 }

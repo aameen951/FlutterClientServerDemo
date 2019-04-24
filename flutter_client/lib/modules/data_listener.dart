@@ -7,6 +7,26 @@ class ListenableData implements Listenable
   final Set<VoidCallback> _listeners = Set<VoidCallback>();
   bool signaled = false;
   
+  String state;
+  dynamic stateData;
+
+  void setLoading(String newState, {dynamic newStateData})
+  {
+    state = newState;
+    stateData = newStateData;
+    notify();
+  }
+  void clearLoading()
+  {
+    state = null;
+    stateData = null;
+    notify();
+  }
+  bool isLoading(String state, {dynamic stateData})
+  {
+    return this.state == state && this.stateData == stateData;
+  }
+  
   @override
   void addListener(listener) {
     _listeners.add(listener);
