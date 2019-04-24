@@ -123,10 +123,10 @@ Future<ApiResponse> makeRequest(String method, String path, dynamic requestData)
     {
       request.headers.set("Authorization", "Bearer $_httpClientAuthToken");
     }
+    if(requestData == null)requestData = <String, dynamic>{};
+    var requestStrData = String.fromCharCodes(convert.JsonUtf8Encoder().convert(requestData));
     if(method != 'GET' && method != 'HEAD')
     {
-      if(requestData == null)requestData = <String, dynamic>{};
-      var requestStrData = String.fromCharCodes(convert.JsonUtf8Encoder().convert(requestData));
       request.write(requestStrData);
     }
     var response = await request.close();
@@ -149,6 +149,8 @@ Future<ApiResponse> makeRequest(String method, String path, dynamic requestData)
     {
       var responseDataStr = await response.transform(convert.utf8.decoder).join();
       try {
+        print("[$method] => $path : $requestStrData");
+        print(" => $responseDataStr");
         var responseMap = Deserializer.strToMap(responseDataStr);
         result = ApiResponse.fromMap(responseMap);
       } on DeserilizationError catch(e) {

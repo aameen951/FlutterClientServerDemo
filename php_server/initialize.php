@@ -174,7 +174,7 @@ function db_insert($table, $data)
   global $connection;
   return mysqli_insert_id($connection);
 }
-function db_select($table, $where)
+function db_select($table, $where=null)
 {
   $q = "SELECT * FROM `$table`";
   if($where) $q .= " WHERE $where";

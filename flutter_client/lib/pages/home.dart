@@ -5,12 +5,14 @@ import 'package:flutter_client/modules/http_client.dart';
 import 'package:flutter_client/modules/i18n.dart';
 import 'package:flutter_client/pages/customers.dart';
 import 'package:flutter_client/pages/intro.dart';
+import 'package:flutter_client/widgets/include.dart';
 
 class HomePage extends StatefulWidget
 {
   @override
   State<StatefulWidget> createState() => HomePageState();
 }
+
 
 class HomePageState extends State<HomePage>
 {
@@ -28,40 +30,34 @@ class HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     var userStatus = sessionGetUserStatus();
-    return Scaffold(
-      appBar: AppBar(),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: SingleChildScrollView(
-            child:Column(
-              crossAxisAlignment: CrossAxisAlignment.start, 
-              children: <Widget>[
-                Text("Hello, <${userStatus.email}>"),
+    return WdPage(
+      title: "page.home.title",
+      child: SingleChildScrollView(
+        child:Column(
+          crossAxisAlignment: CrossAxisAlignment.start, 
+          children: <Widget>[
+            Text("Hello, <${userStatus.email}>"),
 
-                SizedBox(height: 16),
+            SizedBox(height: 16),
 
-                
-                FlatButton(
-                  child: Text(i18n("page.customers.title")),
-                  textColor: Colors.blueAccent,
-                  onPressed: (){
-                    Navigator.of(context).push(
-                        MaterialPageRoute(builder: (ctx) => CustomersPage()));
-                  },
-                ),
-
-                SizedBox(height: 16),
-
-                RaisedButton(
-                  onPressed: logout,
-                  child: Text(i18n("command.logout")),
-                ),
-                rCtx.isLoading ? CircularProgressIndicator() : Container(),
-              ],
+            
+            FlatButton(
+              child: Text(i18n("page.customers.title")),
+              textColor: Colors.blueAccent,
+              onPressed: (){
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => CustomersPage()));
+              },
             ),
-          ),
+
+            SizedBox(height: 16),
+
+            RaisedButton(
+              onPressed: logout,
+              child: Text(i18n("command.logout")),
+            ),
+            rCtx.isLoading ? CircularProgressIndicator() : Container(),
+          ],
         ),
       ),
     );

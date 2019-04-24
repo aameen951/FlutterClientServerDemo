@@ -16,14 +16,52 @@ class Customer
     mobile = Deserializer.readProperty<String>(map, 'mobile');
   }
 }
-class CustomerStore with ListenableData
+
+enum LoadingState
 {
-  List<Customer> _customers = [];
+  Idle,
+  LoadingFirstTime,
+  Updating,
+  Creating,
+  Editing,
+  Deleting,
+}
+class Loadable
+{
+  String state;
+  dynamic stateData;
+  void setLoading(String newState, {dynamic newStateData})
+  {
+    state = newState;
+    stateData = newStateData;
+  }
+  void clearLoading()
+  {
+    state = null;
+    stateData = null;
+  }
+  bool isLoading(String state, {dynamic stateData})
+  {
+    return this.state == state && this.stateData == stateData;
+  }
+}
+class CustomerStore with ListenableData, Loadable
+{
+  List<Customer> _customers;
 
   List<Customer> get customers => _customers;
 
+  static const LOADING_FIRST_TIME = "loading-first-time";
+  static const UPDATING = "updating";
+  static const CREATING = "creating";
+
+  bool get isLoadingFirstTime => isLoading(LOADING_FIRST_TIME);
+  bool get isUpdating => isLoading(UPDATING);
+  bool get isCreating => isLoading(CREATING);
+
   Future<ActionResult> create(String name, String mobile) async
   {
+    setLoading(CREATING);
     var requestData = <String, dynamic>{
       'name': name,
       'mobile': mobile,
@@ -34,18 +72,20 @@ class CustomerStore with ListenableData
     {
       var c = Customer.fromMap(response.data);
       _customers.add(c);
-      notify();
       result = ActionResult.ok(c);
     }
     else if(response.type == responseType_FormError)
     {
       result = ActionResult.formError(response);
     }
+    clearLoading();
+    notify();
     return result;
   }
 
   Future<List<Customer>> getAll() async
   {
+    setLoading(_customers == null ? LOADING_FIRST_TIME : UPDATING);
     var requestData = <String, dynamic>{
     };
     var response = await makeGetRequest('customers', requestData);
@@ -58,6 +98,7 @@ class CustomerStore with ListenableData
       });
     }
     _customers = result;
+    clearLoading();
     notify();
     return result;
   }

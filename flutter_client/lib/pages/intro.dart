@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_client/models/session.dart';
 import 'package:flutter_client/modules/http_client.dart';
-import 'package:flutter_client/modules/json_deserializer.dart';
 import 'package:flutter_client/pages/home.dart';
 import 'package:flutter_client/pages/login.dart';
-import 'package:flutter_client/widgets/response_error.dart';
+import 'package:flutter_client/widgets/include.dart';
 
 class IntroPage extends StatefulWidget {
   IntroPage({Key key}) : super(key: key);
@@ -36,47 +35,40 @@ class IntroPageState extends State<IntroPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(20),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: SafeArea(
-            child: Center(
-              child: Column(
-                children: <Widget>[
-                  SizedBox(height: 16),
-                  Text(
-                    "مقدمة",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30,
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-                  rCtx.errorWidget(),
-                  SizedBox(height: 16),
-
-                  Container(
-                    width: double.infinity,
-                    child: RaisedButton(
-                      child: Text("التالي"),
-                      color: Theme.of(context).primaryColor,
-                      padding: EdgeInsets.all(10),
-                      textColor: Colors.white,
-                      onPressed: checkStatus,
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  rCtx.isLoading ? CircularProgressIndicator() : Container(),
-
-                ],
+    return WdPage(
+      title: null,
+      child: Center(
+        child: Column(
+          children: <Widget>[
+            SizedBox(height: 16),
+            Text(
+              "مقدمة",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 30,
               ),
-            )
-          )
+            ),
+
+            SizedBox(height: 16),
+            rCtx.errorWidget(),
+            SizedBox(height: 16),
+
+            Container(
+              width: double.infinity,
+              child: RaisedButton(
+                child: Text("التالي"),
+                color: Theme.of(context).primaryColor,
+                padding: EdgeInsets.all(10),
+                textColor: Colors.white,
+                onPressed: checkStatus,
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            rCtx.isLoading ? CircularProgressIndicator() : Container(),
+
+          ],
         ),
       )
     );
